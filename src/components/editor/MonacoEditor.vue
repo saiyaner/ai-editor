@@ -3,6 +3,7 @@ import * as monaco from "monaco-editor";
 import { onMounted, onUnmounted, ref, watch } from "vue";
 
 import { useEditorStore } from "@/app/stores/editor";
+import { writeFile } from "@/services/explorer";
 
 const editorStore = useEditorStore();
 
@@ -10,15 +11,20 @@ const editorContainer = ref<HTMLDivElement | null>(null);
 
 let editor: monaco.editor.IStandaloneCodeEditor;
 
-const handleSave = (event: KeyboardEvent) => {
+const handleSave = async (event: KeyboardEvent) => {
   if (event.ctrlKey && event.key === "s") {
     event.preventDefault();
 
     if (!editorStore.currentFile) return;
 
-    editorStore.markSaved(
-      editorStore.currentFile.id
-    );
+    try {
+      await writeFile(editorStore.currentFile.id, editorStore.currentFile.content);
+      editorStore.markSaved(
+        editorStore.currentFile.id
+      );
+    } catch (error) {
+      console.error("Failed to save file:", error);
+    }
   }
 };
 
