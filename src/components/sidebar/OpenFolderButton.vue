@@ -3,6 +3,8 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { useExplorerStore } from "@/app/stores/explorer";
 import { readDirectory } from "@/services/explorer";
 import type { FileNode } from "@/app/types/tree";
+import { getBranch, getStatus } from "@/services/git";
+import { useGitStore } from "@/app/stores/git";
 
 const explorerStore =
   useExplorerStore();
@@ -24,11 +26,21 @@ async function pickFolder() {
 
   if (!folder) return;
 
-  explorerStore.setRoot(folder);
+  explorerStore.setRoot(folder as string);
+  const gitStore = useGitStore();
 
-  const tree =
-    await readDirectory(folder as string);
+  let branch = "";
+  try {
+    branch = await getBranch(folder as string);
+  } catch (error) {
+    console.error("Failed to get git branch:", error);
+  }
+  gitStore.setBranch(branch);
 
+  const status = await getStatus(folder as string);
+  gitStore.setFiles(status);
+
+  const tree = await readDirectory(folder as string);
   explorerStore.setTree(tree as FileNode[]);
 };
 </script>

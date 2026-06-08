@@ -32,13 +32,19 @@ const editorStore = useEditorStore();
 
 <style scoped>
 .editor-area {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .editor-content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .empty-state {

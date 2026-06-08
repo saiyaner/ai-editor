@@ -18,11 +18,17 @@ export const useExplorerStore = defineStore(
       tree.value = nodes;
     }
 
+    function reset() {
+      rootPath.value = "";
+      tree.value = [];
+    }
+
     return {
       rootPath,
       tree,
       setRoot,
       setTree,
+      reset
     };
   }
 );

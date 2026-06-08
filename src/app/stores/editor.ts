@@ -47,11 +47,20 @@ export const useEditorStore = defineStore("editor", () => {
     file.dirty = false;
   }
 
+  function updateContent(content: string) {
+    if (!currentFile.value) return;
+
+    currentFile.value.content = content;
+
+    currentFile.value.dirty = true;
+}
+
   return {
     files,
     currentFile,
     openFile,
     closeFile,
     markSaved,
+    updateContent,
   };
 });

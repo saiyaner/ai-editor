@@ -65,14 +65,22 @@ onMounted(() => {
   );
 
   editor.onDidChangeModelContent(() => {
-    if (isLoadingFile) return;
+    if (isLoadingFile)
+      return;
 
-    if (!editorStore.currentFile) return;
+    if (!editorStore.currentFile)
+      return;
 
-    editorStore.currentFile.content =
-      editor.getValue();
+    const model =
+      editor.getModel();
 
-    editorStore.currentFile.dirty = true;
+    if (!model)
+      return;
+
+    const content =
+      model.getValue();
+
+    editorStore.updateContent(content);
   });
 
   window.addEventListener("keydown", handleSave);

@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { useEditorStore } from "@/app/stores/editor";
 import { useUiStore } from "@/app/stores/ui";
+import { useGitStore } from "@/app/stores/git";
 
-const editorStore = useEditorStore();
-const uiStore = useUiStore();
+const editorStore =
+  useEditorStore();
+
+const uiStore =
+  useUiStore();
+
+const gitStore =
+  useGitStore();
+
 </script>
 
 <template>
@@ -15,6 +23,10 @@ const uiStore = useUiStore();
 
     <div>
       File: {{ editorStore.currentFile?.name ?? "No File" }}
+    </div>
+    
+    <div v-if="gitStore.branch">
+      🌿 {{ gitStore.branch }}
     </div>
 
   </footer>
