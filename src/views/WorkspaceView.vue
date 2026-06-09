@@ -4,7 +4,7 @@ import Header from "@/components/layout/Header.vue";
 import ActivityBar from "@/components/layout/ActivityBar.vue";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import EditorArea from "@/components/layout/EditorArea.vue";
-import AIPanel from "@/components/layout/AIPanel.vue";
+import AIChat from "@/components/ai/AIChat.vue";
 import StatusBar from "@/components/layout/StatusBar.vue";
 import { useLayoutStore } from "@/app/stores/layout";
 import { useEditorStore } from "@/app/stores/editor";
@@ -141,7 +141,7 @@ const stopResize = () => {
       </main>
 
       <aside class="ai-container">
-        <AIPanel />
+        <AIChat />
       </aside>
 
     </div>

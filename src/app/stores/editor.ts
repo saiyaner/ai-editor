@@ -1,13 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-
-export interface EditorFile {
-  id: string;
-  name: string;
-  content: string;
-  language: string;
-  dirty: boolean;
-}
+import type { EditorFile } from "@/app/types/file";
 
 export const useEditorStore = defineStore("editor", () => {
   const files = ref<EditorFile[]>([]);
@@ -24,6 +17,12 @@ export const useEditorStore = defineStore("editor", () => {
     }
 
     currentFile.value = file;
+  }
+
+  function setSelectedCode(code: string) {
+    if (!currentFile.value)
+      return;
+    currentFile.value.selectedCode = code;
   }
 
   function closeFile(id: string) {
@@ -62,5 +61,6 @@ export const useEditorStore = defineStore("editor", () => {
     closeFile,
     markSaved,
     updateContent,
+    setSelectedCode,
   };
 });

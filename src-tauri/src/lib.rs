@@ -10,7 +10,8 @@ pub fn run() {
             write_file,
             run_command,
             git_branch,
-            git_status
+            git_status,
+            ask_ai
         ]
     )
     .plugin(
@@ -22,7 +23,7 @@ pub fn run() {
     .expect("error while running tauri application");
 }
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fs;
 
 #[derive(Serialize)]
@@ -37,6 +38,13 @@ struct FileNode {
 struct GitFile {
     status: String,
     path: String,
+}
+
+#[derive(Serialize)]
+struct OllamaRequest {
+    model: String,
+    prompt: String,
+    stream: bool,
 }
 
 fn build_tree(path: &std::path::Path) -> Vec<FileNode> {
@@ -201,4 +209,47 @@ fn git_status(
     }
 
     Ok(files)
+}
+
+#[tauri::command]
+async fn ask_ai(
+    prompt: String,
+) -> Result<String, String> {
+
+    let client =
+        reqwest::Client::new();
+
+    let response =
+        client
+            .post(
+                "http://localhost:11434/api/generate"
+            )
+            .json(
+                &OllamaRequest {
+                    model:
+                        "qwen2.5-coder:7b"
+                            .to_string(),
+
+                    prompt,
+
+                    stream: false,
+                }
+            )
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+    let json:
+        serde_json::Value =
+        response
+            .json()
+            .await
+            .map_err(|e| e.to_string())?;
+
+    Ok(
+        json["response"]
+            .as_str()
+            .unwrap_or("")
+            .to_string()
+    )
 }

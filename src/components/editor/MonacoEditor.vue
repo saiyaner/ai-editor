@@ -83,6 +83,26 @@ onMounted(() => {
     editorStore.updateContent(content);
   });
 
+  editor.onDidChangeCursorSelection(() => {
+
+    const selection =
+      editor.getSelection();
+
+    if (!selection) return;
+
+    const code =
+      editor
+        .getModel()
+        ?.getValueInRange(
+          selection
+        ) || "";
+
+    editorStore.setSelectedCode(
+      code
+    );
+
+  });
+
   window.addEventListener("keydown", handleSave);
 });
 

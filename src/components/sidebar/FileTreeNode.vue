@@ -31,6 +31,7 @@ async function handleClick() {
       const language = detectLanguage(props.node.name);
       editorStore.openFile({
         id: props.node.path,
+        path: props.node.path,
         name: props.node.name,
         content: content,
         language: language,

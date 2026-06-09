@@ -39,6 +39,7 @@ async function openFile(relativePath: string) {
     const language = detectLanguage(name);
     editorStore.openFile({
       id: fullPath,
+      path: fullPath,
       name,
       content,
       language,
