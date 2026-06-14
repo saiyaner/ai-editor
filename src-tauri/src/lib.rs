@@ -1,8 +1,31 @@
+use tauri::Manager;
+
+struct PythonState {
+    child: std::sync::Mutex<Option<std::process::Child>>,
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  tauri::Builder::default()
+  let app = tauri::Builder::default()
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_fs::init())
+    .setup(|app| {
+        let mut path = std::env::current_dir().unwrap_or_default();
+        if path.ends_with("src-tauri") {
+            path.pop();
+        }
+        let script_path = path.join("src-python").join("main.py");
+
+        let child = std::process::Command::new("python3")
+            .arg(&script_path)
+            .spawn()
+            .ok();
+
+        app.manage(PythonState {
+            child: std::sync::Mutex::new(child),
+        });
+        Ok(())
+    })
     .invoke_handler(
         tauri::generate_handler![
             read_directory,
@@ -11,7 +34,9 @@ pub fn run() {
             run_command,
             git_branch,
             git_status,
-            ask_ai
+            ask_ai,
+            get_models,
+            autocomplete
         ]
     )
     .plugin(
@@ -19,11 +44,23 @@ pub fn run() {
             .level(log::LevelFilter::Info)
             .build(),
     )
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+    .build(tauri::generate_context!())
+    .expect("error while building tauri application");
+
+  app.run(|app_handle, event| {
+    if let tauri::RunEvent::Exit = event {
+      if let Some(state) = app_handle.try_state::<PythonState>() {
+        if let Ok(mut guard) = state.child.lock() {
+          if let Some(mut child) = guard.take() {
+            let _ = child.kill();
+          }
+        }
+      }
+    }
+  });
 }
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::fs;
 
 #[derive(Serialize)]
@@ -41,10 +78,10 @@ struct GitFile {
 }
 
 #[derive(Serialize)]
-struct OllamaRequest {
+struct AutocompleteRequest {
+    prefix: String,
+    suffix: String,
     model: String,
-    prompt: String,
-    stream: bool,
 }
 
 fn build_tree(path: &std::path::Path) -> Vec<FileNode> {
@@ -211,45 +248,130 @@ fn git_status(
     Ok(files)
 }
 
+#[derive(serde::Serialize)]
+struct OllamaRequest {
+    model: String,
+    prompt: String,
+    images: Vec<String>,
+    stream: bool,
+}
+
 #[tauri::command]
 async fn ask_ai(
     prompt: String,
-) -> Result<String, String> {
+    images: Vec<String>,
+    model: String,
+    on_chunk: tauri::ipc::Channel<String>,
+) -> Result<(), String> {
+    use futures_util::StreamExt;
 
-    let client =
-        reqwest::Client::new();
+    let client = reqwest::Client::new();
 
-    let response =
-        client
-            .post(
-                "http://localhost:11434/api/generate"
-            )
-            .json(
-                &OllamaRequest {
-                    model:
-                        "qwen2.5-coder:7b"
-                            .to_string(),
+    let mut cleaned_images = Vec::new();
+    for img in images {
+        if img.contains(",") {
+            if let Some(pos) = img.find(',') {
+                cleaned_images.push(img[pos + 1..].to_string());
+            } else {
+                cleaned_images.push(img.clone());
+            }
+        } else {
+            cleaned_images.push(img.clone());
+        }
+    }
 
-                    prompt,
+    let payload = OllamaRequest {
+        model,
+        prompt,
+        images: cleaned_images,
+        stream: true,
+    };
 
-                    stream: false,
+    let response = client
+        .post("http://localhost:11434/api/generate")
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !response.status().is_success() {
+        return Err(format!("Ollama error status: {}", response.status()));
+    }
+
+    let mut stream = response.bytes_stream();
+    let mut buffer = String::new();
+
+    while let Some(chunk_result) = stream.next().await {
+        let chunk = chunk_result.map_err(|e| e.to_string())?;
+        let text = String::from_utf8_lossy(&chunk);
+        buffer.push_str(&text);
+
+        while let Some(pos) = buffer.find('\n') {
+            let line = buffer[..pos].trim().to_string();
+            buffer = buffer[pos + 1..].to_string();
+
+            if !line.is_empty() {
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&line) {
+                    if let Some(resp) = json["response"].as_str() {
+                        let _ = on_chunk.send(resp.to_string());
+                    }
                 }
-            )
-            .send()
-            .await
-            .map_err(|e| e.to_string())?;
+            }
+        }
+    }
 
-    let json:
-        serde_json::Value =
-        response
-            .json()
-            .await
-            .map_err(|e| e.to_string())?;
+    Ok(())
+}
 
-    Ok(
-        json["response"]
-            .as_str()
-            .unwrap_or("")
-            .to_string()
-    )
+#[tauri::command]
+async fn get_models() -> Result<Vec<String>, String> {
+    let client = reqwest::Client::new();
+    let response = client
+        .get("http://127.0.0.1:11435/models")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let json: serde_json::Value = response
+        .json()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let models = json["models"]
+        .as_array()
+        .ok_or("Invalid response format")?
+        .iter()
+        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+        .collect();
+
+    Ok(models)
+}
+
+#[tauri::command]
+async fn autocomplete(
+    prefix: String,
+    suffix: String,
+    model: String,
+) -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let response = client
+        .post("http://127.0.0.1:11435/autocomplete")
+        .json(&AutocompleteRequest {
+            prefix,
+            suffix,
+            model,
+        })
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let json: serde_json::Value = response
+        .json()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(json["suggestion"]
+        .as_str()
+        .unwrap_or("")
+        .to_string())
 }

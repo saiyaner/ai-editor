@@ -20,14 +20,14 @@ const getDirectoryPath = (path: string) => {
   return parts.slice(0, parts.length - 1).join("/");
 };
 
-const getStatusClass = (status: string) => {
+const getStatusColor = (status: string) => {
   switch (status.toUpperCase()) {
-    case "M": return "status-modified";
+    case "M": return "text-[#d29922]";
     case "??":
-    case "U": return "status-untracked";
-    case "D": return "status-deleted";
-    case "A": return "status-added";
-    default: return "status-unknown";
+    case "U": return "text-[#3fb950]";
+    case "D": return "text-error";
+    case "A": return "text-[#58a6ff]";
+    default: return "text-on-surface-variant";
   }
 };
 
@@ -58,267 +58,68 @@ async function handleCommit() {
 </script>
 
 <template>
-  <div class="git-panel">
-    <div class="panel-header">
-      <span class="panel-title">SOURCE CONTROL</span>
-      <button class="refresh-btn" @click="refreshGit" :class="{ spinning: isRefreshing }" title="Refresh Status">
-        🔄
+  <div class="flex flex-col h-full bg-surface-container-low text-on-surface overflow-hidden select-none">
+    
+    <!-- Header -->
+    <div class="h-10 shrink-0 flex items-center justify-between px-4 border-b border-outline-variant bg-surface-container-high">
+      <span class="text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">SOURCE CONTROL</span>
+      <button 
+        class="text-on-surface-variant hover:text-on-surface p-1 rounded hover:bg-surface-variant transition-colors flex items-center"
+        @click="refreshGit" 
+        :class="{ 'animate-spin': isRefreshing }"
+        title="Refresh Status"
+      >
+        <span class="material-symbols-outlined text-[16px]">refresh</span>
       </button>
     </div>
 
     <!-- Commit Input Area -->
-    <div class="commit-box">
+    <div class="p-4 flex flex-col gap-2 border-b border-outline-variant bg-surface-container-low">
       <textarea
         v-model="commitMessage"
         placeholder="Commit message (Ctrl+Enter to commit)"
         rows="2"
-        class="commit-input"
+        class="w-full bg-surface border border-outline-variant rounded p-3 text-xs font-code text-on-surface placeholder-on-surface-variant/50 focus:border-primary focus:outline-none resize-none transition-colors"
         @keydown.ctrl.enter="handleCommit"
       ></textarea>
+      
       <button 
-        class="commit-btn" 
+        class="w-full bg-primary hover:bg-white text-background text-[11px] font-bold py-2 px-3 rounded flex items-center justify-center gap-1 transition-colors uppercase" 
         @click="handleCommit"
         :disabled="!commitMessage.trim() || gitStore.files.length === 0"
       >
-        Commit
+        <span>COMMIT</span>
+        <span class="material-symbols-outlined text-[14px]">send</span>
       </button>
     </div>
 
     <!-- Changes List -->
-    <div class="changes-section">
-      <div class="section-title">
+    <div class="flex-1 flex flex-col overflow-hidden bg-surface-container-lowest">
+      <div class="flex items-center justify-between px-4 py-2.5 text-[11px] font-bold text-on-surface-variant border-b border-outline-variant bg-surface-container">
         <span>CHANGES</span>
-        <span class="changes-count">{{ gitStore.files.length }}</span>
+        <span class="bg-surface-variant text-on-surface px-2 py-0.5 rounded text-[10px] font-code">{{ gitStore.files.length }}</span>
       </div>
 
-      <div class="files-list" v-if="gitStore.files.length > 0">
+      <div class="flex-1 overflow-y-auto" v-if="gitStore.files.length > 0">
         <div
           v-for="file in gitStore.files"
           :key="file.path"
-          class="git-file-item"
+          class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-variant cursor-pointer border-b border-outline-variant/50 transition-colors"
           :title="file.path"
         >
-          <div class="file-info">
-            <span class="file-name">{{ getFileName(file.path) }}</span>
-            <span class="file-path">{{ getDirectoryPath(file.path) }}</span>
+          <div class="flex flex-col min-w-0 mr-2">
+            <span class="text-xs font-semibold text-on-surface truncate">{{ getFileName(file.path) }}</span>
+            <span class="text-[10px] text-on-surface-variant truncate font-code mt-0.5">{{ getDirectoryPath(file.path) || './' }}</span>
           </div>
-          <span class="status-badge" :class="getStatusClass(file.status)">
+          <span class="text-xs font-bold font-code shrink-0" :class="getStatusColor(file.status)">
             {{ getStatusLabel(file.status) }}
           </span>
         </div>
       </div>
-      <div class="empty-changes" v-else>
-        No changes detected
+      
+      <div class="flex-1 flex items-center justify-center p-6 text-center text-xs text-on-surface-variant/50" v-else>
+        No staged or unstaged changes
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.git-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background-color: #161b22;
-  color: #c9d1d9;
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid #30363d;
-  background-color: #0d1117;
-}
-
-.panel-title {
-  font-size: 11px;
-  font-weight: bold;
-  letter-spacing: 0.5px;
-  color: #8b949e;
-}
-
-.refresh-btn {
-  background: transparent;
-  border: none;
-  color: #8b949e;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 2px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-}
-
-.refresh-btn:hover {
-  background-color: #21262d;
-  color: #c9d1d9;
-}
-
-.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.commit-box {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-bottom: 1px solid #30363d;
-}
-
-.commit-input {
-  background-color: #0d1117;
-  border: 1px solid #30363d;
-  border-radius: 4px;
-  color: #c9d1d9;
-  padding: 8px;
-  font-family: inherit;
-  font-size: 13px;
-  resize: vertical;
-  outline: none;
-}
-
-.commit-input:focus {
-  border-color: #58a6ff;
-}
-
-.commit-btn {
-  background-color: #238636;
-  color: #ffffff;
-  border: 1px solid rgba(240, 246, 252, 0.1);
-  border-radius: 4px;
-  padding: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  font-size: 13px;
-  transition: background-color 0.2s;
-}
-
-.commit-btn:hover:not(:disabled) {
-  background-color: #2ea043;
-}
-
-.commit-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: #21262d;
-  color: #8b949e;
-}
-
-.changes-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.section-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  font-size: 11px;
-  font-weight: bold;
-  color: #8b949e;
-  border-bottom: 1px solid #21262d;
-  background-color: #0d1117;
-}
-
-.changes-count {
-  background-color: #30363d;
-  color: #c9d1d9;
-  padding: 1px 6px;
-  border-radius: 10px;
-  font-size: 10px;
-}
-
-.files-list {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.git-file-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.git-file-item:hover {
-  background-color: #21262d;
-}
-
-.file-info {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  margin-right: 8px;
-}
-
-.file-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #c9d1d9;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.file-path {
-  font-size: 11px;
-  color: #8b949e;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.status-badge {
-  font-size: 11px;
-  font-weight: bold;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-
-.status-modified {
-  color: #d29922;
-}
-
-.status-untracked {
-  color: #3fb950;
-}
-
-.status-deleted {
-  color: #f85149;
-}
-
-.status-added {
-  color: #58a6ff;
-}
-
-.status-unknown {
-  color: #8b949e;
-}
-
-.empty-changes {
-  padding: 24px;
-  text-align: center;
-  color: #8b949e;
-  font-size: 13px;
-}
-</style>

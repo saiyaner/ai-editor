@@ -4,6 +4,7 @@ import type { FileNode } from "@/app/types/tree";
 import { useEditorStore } from "@/app/stores/editor";
 import { readFile } from "@/services/explorer";
 import { detectLanguage } from "@/services/language";
+import { getFileIconUrl } from "@/services/fileIcons";
 
 const props = withDefaults(
   defineProps<{
@@ -21,6 +22,10 @@ const isExpanded = ref(false);
 const isCurrentFile = computed(() => {
   return editorStore.currentFile?.id === props.node.path;
 });
+
+const iconUrl = computed(() =>
+  getFileIconUrl(props.node.name, props.node.is_dir, isExpanded.value)
+);
 
 async function handleClick() {
   if (props.node.is_dir) {
@@ -45,30 +50,36 @@ async function handleClick() {
 </script>
 
 <template>
-  <div class="file-tree-node">
+  <div class="select-none">
     <div
-      class="node-label"
-      :class="{
-        'is-active': isCurrentFile,
-        'is-directory': node.is_dir
-      }"
+      :class="[
+        isCurrentFile
+          ? 'bg-surface-container-high border-l-2 border-on-surface text-on-surface font-semibold'
+          : 'text-on-surface-variant hover:bg-surface-variant hover:text-on-surface border-l-2 border-transparent'
+      ]"
+      class="flex items-center gap-1 py-0.5 pr-2 text-[11px] font-mono cursor-pointer transition-colors"
       :style="{ paddingLeft: `${depth * 12 + 8}px` }"
       @click="handleClick"
     >
-      <span class="chevron" v-if="node.is_dir">
-        {{ isExpanded ? "▼" : "▶" }}
+      <!-- Chevron for dir -->
+      <span v-if="node.is_dir" class="material-symbols-outlined shrink-0 text-on-surface-variant" style="font-size:13px">
+        {{ isExpanded ? 'expand_more' : 'chevron_right' }}
       </span>
-      <span class="chevron placeholder" v-else></span>
+      <span v-else class="w-3.5 shrink-0"></span>
 
-      <span class="icon">
-        <span v-if="node.is_dir">📁</span>
-        <span v-else>📄</span>
-      </span>
+      <!-- Material SVG icon -->
+      <img
+        :src="iconUrl"
+        :alt="node.name"
+        class="w-4 h-4 shrink-0 object-contain"
+        :style="isCurrentFile ? 'opacity:1' : 'opacity:0.9'"
+      />
 
-      <span class="name">{{ node.name }}</span>
+      <!-- Name -->
+      <span class="truncate text-[11px] tracking-normal leading-none">{{ node.name }}</span>
     </div>
 
-    <div v-if="node.is_dir && isExpanded" class="node-children">
+    <div v-if="node.is_dir && isExpanded" class="flex flex-col">
       <FileTreeNode
         v-for="child in node.children"
         :key="child.path"
@@ -80,61 +91,6 @@ async function handleClick() {
 </template>
 
 <style scoped>
-.file-tree-node {
-  user-select: none;
-}
-
-.node-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 14px;
-  color: #c9d1d9;
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.node-label:hover {
-  background-color: #21262d;
-  color: #f0f6fc;
-}
-
-.node-label.is-active {
-  background-color: #1f6feb33;
-  color: #58a6ff;
-  font-weight: 500;
-}
-
-.chevron {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 12px;
-  height: 12px;
-  font-size: 8px;
-  color: #8b949e;
-}
-
-.chevron.placeholder {
-  width: 12px;
-}
-
-.icon {
-  font-size: 14px;
-  display: inline-flex;
-  align-items: center;
-}
-
-.name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.node-children {
-  display: flex;
-  flex-direction: column;
-}
+/* file-tree node — layout defined via Tailwind utilities above */
+div { box-sizing: border-box; }
 </style>

@@ -1,217 +1,144 @@
-# AI Editor
+# ❄️ Nordic IDE
 
-AI-powered code editor built with **Vue 3**, **TypeScript**, **Tauri v2**, **Monaco Editor**, and **Ollama**.
+A high-performance, premium AI-native code editor crafted with a clean **Nordic aesthetic**, built on **Vue 3**, **TypeScript**, **Tauri v2**, **Monaco Editor**, and **Ollama**.
 
-Inspired by modern AI-native IDEs such as Cursor, Windsurf, and VS Code, AI Editor provides an integrated development environment with local AI assistance, file management, code editing, and intelligent code explanations.
-
----
-
-## Features
-
-### Editor
-
-- Monaco Editor integration
-- Multi-tab editing
-- Dirty file indicators
-- Syntax highlighting
-- Automatic language detection
-- File save support
-- Open file from workspace
-
-### File Explorer
-
-- Open Folder
-- Workspace tree navigation
-- File selection
-- Active file tracking
-
-### AI Assistant
-
-- Chat with local AI models
-- Explain selected code
-- Fix selected code
-- Context-aware responses
-- Markdown rendering
-- Code block rendering
-- Workspace-aware prompts
-
-### Architecture
-
-- Frontend: Vue 3 + TypeScript
-- State Management: Pinia
-- Desktop Runtime: Tauri v2
-- Editor Engine: Monaco Editor
-- AI Backend: Ollama
-- Styling: Custom CSS
+Designed for developers who prioritize visual excellence, high performance, and absolute privacy. Every feature runs entirely on your local machine.
 
 ---
 
-## Tech Stack
+## ✨ Features & Architecture
 
-### Frontend
+### 🎨 Visual & Theme System
 
-- Vue 3
-- TypeScript
-- Vite
-- Pinia
-- Monaco Editor
-- Markdown-It
+- **Nordic Vivid Theme**: Custom Monaco editor theme inspired by _Catppuccin Mocha_, tuned for high readability with a specific 5-hue palette mapping.
+- **Material Icon Theme Integration**: Dynamically loads real, official file-type SVGs in the File Tree and Editor Tabs, matching modern VS Code standards.
+- **Premium UX Details**: Custom styled compact tab Close buttons (`×`), pulse dirty-state indicators, smooth micro-animations, and glassmorphic panels.
 
-### Backend
+### ⚡ AI Assistant (Ollama Powered)
 
-- Tauri v2
-- Rust
+- **Real-time Streaming Chat**: Incremental token streaming using Tauri v2 Channels, bypassing standard synchronous request latency for instananeous replies.
+- **Direct Ollama Integration**: Fully asynchronous chunk stream parsed and rendered in markdown in real-time.
+- **Markdown-It Integration**: Custom parser rendering codeblocks, auto-injecting:
+  - `▶ Run in Terminal` buttons for shell commands.
+  - `✅ Apply` buttons for code snippets directly into the active editor.
+- **Selection Assistant Grid**: Quick actions executing contextual prompts on selected editor code blocks:
+  - 💡 **Explain**: Step-by-step description of selected code logic.
+  - 🐛 **Fix Bugs**: Deep diagnostic and fix recommendations for syntax/logic bugs.
+  - 🧹 **Refactor**: Clean, simplify, and polish code structure to idiomatic forms.
+  - ⚡ **Optimize**: Speed up execution, lower complexity, and optimize memory usage.
+  - 🧪 **Write Tests**: Automatically construct unit tests based on selection.
+  - 📝 **Document**: Generate premium inline documentation (JSDocs, Rust docs, Python docstrings).
+  - 📋 **Checklist PLAN**: Generate implementation checklists for your current task context.
 
-### AI
+### 🛠️ Developer Productivity Tools
 
-- Ollama
-- DeepSeek Coder
-- Qwen Coder
-- Any Ollama-compatible model
+- **Prettier Standalone Formatter**: Built-in multi-language code formatter accessible via a Status Bar button (`✨`) and the `Ctrl+Shift+F` hotkey.
+- **Active Context Syncing**: Automatic language detection supporting 20+ file formats (Rust, Go, Python, Vue, TS, C++, and more) to guarantee instant syntax coloring and language features.
+- **Local Terminal Control**: Integration for terminal execution and instant command piping from codeblock suggestions.
 
 ---
 
-## Project Structure
+## 🏛️ Architecture & Tech Stack
+
+```mermaid
+graph TD
+    A[Frontend: Vue 3 + Pinia] <-->|Tauri IPC Channel / Core Invoke| B[Tauri Desktop Core: Rust]
+    B <-->|Direct Local Query / Port 11434| C[Ollama LLM Engine]
+    B <-->|Subprocess Control| D[Python Sidecar Server / Port 11435]
+    A -->|Syntax Highlighting| E[Monaco Editor]
+```
+
+- **Frontend**: Vue 3 (Composition API), Pinia (State Management), Tailwind CSS v4.
+- **Desktop Shell**: Tauri v2 (Rust) providing filesystem access, git status utilities, and process managers.
+- **Formatting Engine**: Standalone Prettier parser bundle.
+- **AI Model Engine**: Local Ollama server (`deepseek-coder`, `qwen2.5-coder`, or similar).
+
+---
+
+## 📂 Project Structure
 
 ```text
-src
-├── app
-│   ├── router
-│   ├── stores
-│   └── types
-│
-├── components
-│   ├── ai
-│   ├── editor
-│   ├── layout
-│   ├── sidebar
-│   └── terminal
-│
-├── services
-│   ├── ai.ts
-│   ├── context.ts
-│   └── prompt.ts
-│
-├── views
-│   └── WorkspaceView.vue
-│
-└── main.ts
-
-src-tauri
-├── src
-│   ├── lib.rs
-│   └── main.rs
-│
-├── capabilities
-└── tauri.conf.json
+ai-editor/
+├── src/                      # Vue 3 Frontend Workspace
+│   ├── app/                  # Application State & Configuration
+│   │   ├── router/           # Routing definitions
+│   │   └── stores/           # Pinia stores (editor, AI, terminal, explorer)
+│   ├── components/           # Reusable UI components
+│   │   ├── ai/               # AI Chat & Selection Assistant
+│   │   ├── editor/           # Monaco Editor & Document Tab Bar
+│   │   ├── layout/           # Sidebar layout & Status Bar
+│   │   └── sidebar/          # File explorer tree
+│   ├── services/             # Core TypeScript APIs
+│   │   ├── ai.ts             # Channel IPC connection
+│   │   ├── formatter.ts      # Standalone Prettier
+│   │   └── language.ts       # Language detector
+│   └── main.ts               # Frontend entrypoint
+├── src-tauri/                # Tauri Desktop Backend
+│   ├── src/
+│   │   ├── lib.rs            # Tauri Rust commands (filesystem, git, stream)
+│   │   └── main.rs           # Core entrypoint
+│   └── Cargo.toml            # Rust packages & capabilities
+└── src-python/               # Python Utility Sidecar Process
+    └── main.py               # Autocomplete & background service helper
 ```
 
 ---
 
-## Installation
+## 🚀 Getting Started
 
-### Clone Repository
+### Prerequisites
 
-```bash
-git clone https://github.com/saiyaner/ai-editor.git
+1. **Rust & Tauri Tools**: Install Rust via [rustup](https://rustup.rs/) (Tauri v2 requires Rust 1.77.2+).
+2. **NodeJS**: Version 18+ recommended.
+3. **Python**: Python 3.8+ for utility sidecars.
+4. **Ollama**: Download and install [Ollama](https://ollama.com).
 
-cd ai-editor
-```
+### Installation & Run
 
-### Install Dependencies
+1. **Clone the repository**:
 
-```bash
-npm install
-```
+   ```bash
+   git clone https://github.com/saiyaner/ai-editor.git
+   cd ai-editor
+   ```
 
-### Start Ollama
+2. **Install frontend dependencies**:
 
-```bash
-ollama serve
-```
+   ```bash
+   npm install
+   ```
 
-### Pull Model
+3. **Start local AI Engine (Ollama)**:
+   Ensure Ollama is running, then pull your preferred coding model:
 
-```bash
-ollama pull qwen2.5-coder:7b
-```
+   ```bash
+   ollama pull qwen2.5-coder:3b
+   ```
 
-or
+4. **Run in development mode**:
 
-```bash
-ollama pull deepseek-coder:6.7b
-```
+   ```bash
+   npm run tauri dev
+   ```
 
-### Run Development Mode
-
-```bash
-npm run tauri dev
-```
-
----
-
-## Current Implemented Features
-
-- [x] Monaco Editor
-- [x] File Explorer
-- [x] Open Folder
-- [x] Multi Tabs
-- [x] Dirty Indicator
-- [x] AI Chat
-- [x] Explain Selection
-- [x] Fix Code
-- [x] Context Injection
-- [x] Markdown Rendering
-- [x] Local AI via Ollama
+5. **Build production app**:
+   ```bash
+   npm run tauri build
+   ```
 
 ---
 
-## Roadmap
+## ⌨️ Shortcuts & Hotkeys
 
-### Phase 1
-
-- [x] Open Folder
-- [x] Monaco Editor
-- [x] AI Chat
-- [x] Explain Code
-
-### Phase 2
-
-- [ ] Apply AI Changes
-- [ ] Refactor Code
-- [ ] Generate Tests
-- [ ] Explain Errors
-- [ ] Workspace Context
-
-### Phase 3
-
-- [ ] Integrated Terminal
-- [ ] Agent Mode
-- [ ] Multi-file Editing
-- [ ] Code Actions
-- [ ] AI Workspace Search
-
-### Phase 4
-
-- [ ] Git Integration
-- [ ] AI Commit Messages
-- [ ] Project Generation
-- [ ] Autonomous Coding Agent
+| Shortcut            | Action                                 |
+| ------------------- | -------------------------------------- |
+| `Ctrl + S`          | Save Active Document                   |
+| `Ctrl + Shift + F`  | Format Code with Prettier              |
+| `@` in Chat Input   | Mention files to include in AI Context |
+| `Double Click File` | Open in Monaco editor                  |
 
 ---
 
-## Screenshots
+## 🛡️ License
 
-Coming Soon.
-
----
-
-## License
-
-MIT License
-
----
-
-## Author
-
-Developed by Angga using Vue, Rust, Tauri, Monaco Editor, and Ollama.
+Distributed under the **MIT License**. See `LICENSE` for more information.

@@ -1,52 +1,29 @@
 <script setup lang="ts">
 import AIChat from "@/components/ai/AIChat.vue";
-import { useEditorStore } from "@/app/stores/editor";
-
-const editor =
-  useEditorStore();
 </script>
 
 <template>
-  <div class="ai-panel">
-    <div class="panel-header">
-      🤖 AI Assistant
-
-      <span
-        v-if="
-          editor.currentFile
-        "
-        class="file-context"
-      >
-        {{ editor.currentFile.name }}
-      </span>
+  <div class="flex flex-col h-full w-full overflow-hidden bg-surface-container select-none">
+    
+    <!-- Header -->
+    <div class="h-10 shrink-0 flex items-center justify-between px-4 border-b border-outline-variant bg-surface-container-high">
+      <div class="text-[11px] font-bold tracking-wider text-on-surface flex items-center gap-2 uppercase">
+        <span class="material-symbols-outlined text-[16px] text-primary">smart_toy</span>
+        AI ASSISTANT
+      </div>
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <button class="hover:text-on-surface transition-colors flex items-center">
+          <span class="material-symbols-outlined text-[16px]">history</span>
+        </button>
+        <button class="hover:text-on-surface transition-colors flex items-center">
+          <span class="material-symbols-outlined text-[16px]">more_vert</span>
+        </button>
+      </div>
     </div>
 
-    <AIChat />
+    <!-- Content -->
+    <div class="flex-1 min-h-0 overflow-hidden">
+      <AIChat />
+    </div>
   </div>
 </template>
-
-<style scoped>
-.ai-panel {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: #0f172a;
-}
-
-.panel-header {
-  height: 42px;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  border-bottom: 1px solid #1e293b;
-  font-size: 13px;
-  font-weight: 600;
-  color: #e2e8f0;
-}
-
-.file-context {
-  margin-left: auto;
-  opacity: 0.6;
-  font-size: 11px;
-}
-</style>

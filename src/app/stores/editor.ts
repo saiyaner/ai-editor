@@ -54,13 +54,21 @@ export const useEditorStore = defineStore("editor", () => {
     currentFile.value.dirty = true;
 }
 
+  const pendingCodeApply = ref<string | null>(null);
+
+  function applyCode(code: string) {
+    pendingCodeApply.value = code;
+  }
+
   return {
     files,
     currentFile,
+    pendingCodeApply,
     openFile,
     closeFile,
     markSaved,
     updateContent,
     setSelectedCode,
+    applyCode,
   };
 });

@@ -5,105 +5,84 @@ const uiStore = useUiStore();
 </script>
 
 <template>
-  <div class="activity-bar">
-    <div class="top-items">
+  <div class="w-12 h-full flex flex-col justify-between items-center bg-surface-container-low border-r border-outline-variant py-4 select-none shrink-0 z-40">
+    <div class="flex flex-col gap-6 w-full">
+      <!-- Explorer -->
       <button
-        :class="{ active: uiStore.activeView === 'explorer' }"
+        :class="[
+          uiStore.activeView === 'explorer'
+            ? 'text-on-surface'
+            : 'text-on-surface-variant hover:text-on-surface'
+        ]"
+        class="w-full flex justify-center relative transition-colors group cursor-pointer"
         @click="uiStore.setActiveView('explorer')"
         title="Explorer"
       >
-        📁
+        <div v-if="uiStore.activeView === 'explorer'" class="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-8 bg-primary"></div>
+        <span class="material-symbols-outlined text-[22px]">folder_open</span>
       </button>
 
+      <!-- Git / Source Control -->
       <button
-        :class="{ active: uiStore.activeView === 'git' }"
+        :class="[
+          uiStore.activeView === 'git'
+            ? 'text-on-surface'
+            : 'text-on-surface-variant hover:text-on-surface'
+        ]"
+        class="w-full flex justify-center relative transition-colors group cursor-pointer"
         @click="uiStore.setActiveView('git')"
-        title="Source Control (Git)"
+        title="Source Control"
       >
-        🌿
+        <div v-if="uiStore.activeView === 'git'" class="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-8 bg-primary"></div>
+        <span class="material-symbols-outlined text-[22px]">account_tree</span>
       </button>
 
+      <!-- Search -->
       <button
-        :class="{ active: uiStore.activeView === 'search' }"
+        :class="[
+          uiStore.activeView === 'search'
+            ? 'text-on-surface'
+            : 'text-on-surface-variant hover:text-on-surface'
+        ]"
+        class="w-full flex justify-center relative transition-colors group cursor-pointer"
         @click="uiStore.setActiveView('search')"
         title="Search"
       >
-        🔍
+        <div v-if="uiStore.activeView === 'search'" class="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-8 bg-primary"></div>
+        <span class="material-symbols-outlined text-[22px]">search</span>
       </button>
 
+      <!-- AI Chat -->
       <button
-        :class="{ active: uiStore.activeView === 'ai' }"
+        :class="[
+          uiStore.activeView === 'ai'
+            ? 'text-on-surface'
+            : 'text-on-surface-variant hover:text-on-surface'
+        ]"
+        class="w-full flex justify-center relative transition-colors group cursor-pointer"
         @click="uiStore.setActiveView('ai')"
         title="AI Assistant"
       >
-        🤖
+        <div v-if="uiStore.activeView === 'ai'" class="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-8 bg-primary"></div>
+        <span class="material-symbols-outlined text-[22px]">smart_toy</span>
       </button>
     </div>
 
-    <div class="bottom-items">
+    <!-- Settings -->
+    <div class="flex flex-col gap-6 w-full">
       <button
-        :class="{ active: uiStore.activeView === 'settings' }"
+        :class="[
+          uiStore.activeView === 'settings'
+            ? 'text-on-surface'
+            : 'text-on-surface-variant hover:text-on-surface'
+        ]"
+        class="w-full flex justify-center relative transition-colors group cursor-pointer"
         @click="uiStore.setActiveView('settings')"
         title="Settings"
       >
-        ⚙
+        <div v-if="uiStore.activeView === 'settings'" class="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-8 bg-primary"></div>
+        <span class="material-symbols-outlined text-[22px]">settings</span>
       </button>
     </div>
   </div>
 </template>
-
-<style scoped>
-.activity-bar {
-  width: 60px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  background-color: #0d1117;
-  border-right: 1px solid #30363d;
-  padding: 8px 0;
-  user-select: none;
-}
-
-.top-items, .bottom-items {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  gap: 8px;
-}
-
-button {
-  width: 100%;
-  height: 48px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  opacity: 0.6;
-  transition: opacity 0.2s ease, background-color 0.2s ease;
-}
-
-button:hover {
-  opacity: 0.9;
-  background-color: #21262d;
-}
-
-button.active {
-  opacity: 1;
-}
-
-button.active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 10%;
-  height: 80%;
-  width: 3px;
-  background-color: #58a6ff;
-  border-radius: 0 4px 4px 0;
-}
-</style>
